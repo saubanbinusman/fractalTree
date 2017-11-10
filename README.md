@@ -1,6 +1,9 @@
 # Colorful Fractal Binary Tree
 Tried my luck on generating a colorful fractal binary tree.
 
+#Screenshot
+![Screenshot of the program](/Screenshot.png?raw=true "Screenshot")
+
 # How to Compile
 ## Pre-requisites:
 * Any C++ compiler. g++ is recommended.
