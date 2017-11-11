@@ -1,18 +1,106 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <utility>
 #include <SDL2/SDL.h>
 
 using namespace std;
 
 SDL_Window* window;
 SDL_Renderer* renderer;
+Uint8 r, g, b;
 
 int random(int min, int max)
 {
-	int r = rand() % (max + 1);
-	if (r < min) r += min;
-	return r;
+	int ret = rand() % (max + 1);
+	if (ret < min) ret += min;
+	return ret;
+}
+
+// https://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
+
+double inline round(double x) { return floor(x + 0.5); }
+double inline fPart(double x) { return x - floor(x); }
+double inline rfPart(double x) { return 1 - fPart(x); }
+
+void plot(int x, int y, double brightness)
+{
+	SDL_SetRenderDrawColor(renderer, r, g, b, brightness * 0xFF);
+	SDL_RenderDrawPoint(renderer, x, y);
+}
+
+void wuLine(double x0, double y0, double x1, double y1)
+{
+	bool steep = fabs(y1 - y0) > fabs(x1 - x0);
+
+	if (steep)
+	{
+		swap(x0, y0);
+		swap(x1, y1);
+	}
+
+	if (x0 > x1)
+	{
+		swap(x0, x1);
+		swap(y0, y1);
+	}
+
+	double dx = x1 - x0;
+	double dy = y1 - y0;
+
+	double gradient = dx == 0.0  ? 1.0 : dy / dx;
+
+	double xEnd = round(x0);
+	double yEnd = y0 + gradient * (xEnd - x0);
+	double xGap = rfPart(x0 + 0.5);
+	double xPixel1 = xEnd;
+	double yPixel1 = floor(yEnd);
+
+	if (steep)
+	{
+		plot(yPixel1,     xPixel1, rfPart(yEnd) * xGap);
+		plot(yPixel1 + 1, xPixel1,  fPart(yEnd) * xGap);
+	}
+
+	else
+	{
+		plot(xPixel1, yPixel1,    rfPart(yEnd) * xGap);
+		plot(xPixel1, yPixel1 + 1, fPart(yEnd) * xGap);
+	}
+	
+	double yIntersection = yEnd + gradient;
+	
+	xEnd = round(x1);
+	yEnd = y1 + gradient * (xEnd - x1);
+	xGap = fPart(x1 + 0.5);
+	double xPixel2 = xEnd;
+	double yPixel2 = floor(yEnd);
+
+	if (steep)
+	{
+		plot(yPixel2,     xPixel2, rfPart(yEnd) * xGap);
+		plot(yPixel2 + 1, xPixel2,  fPart(yEnd) * xGap);
+		
+		for (int x = xPixel1 + 1; x <= (xPixel2 - 1); x++)
+		{
+			plot(yIntersection    , x, rfPart(yIntersection));
+			plot(yIntersection + 1, x,  fPart(yIntersection));
+			yIntersection += gradient;
+		}
+	}
+
+	else
+	{
+		plot(xPixel2, yPixel2,    rfPart(yEnd) * xGap);
+		plot(xPixel2, yPixel2 + 1, fPart(yEnd) * xGap);
+		
+		for (int x = xPixel1 + 1; x <= (xPixel2 - 1); x++)
+		{
+			plot(x, yIntersection    , rfPart(yIntersection));
+			plot(x, yIntersection + 1,  fPart(yIntersection));
+			yIntersection += gradient;
+		}
+	}
 }
 
 void RenderTree(int lineLength, int startX, int startY, int angle)
@@ -25,8 +113,11 @@ void RenderTree(int lineLength, int startX, int startY, int angle)
 	int endX = (int)(startX - (double)lineLength * cos(angleInRad));
 	int endY = (int)(startY - (double)lineLength * sin(angleInRad));
 	
-	SDL_SetRenderDrawColor(renderer, random(0, 255), random(0, 255), random(0, 255), 100);
-	SDL_RenderDrawLine(renderer, startX, startY, endX, endY);
+	r = random(0, 255);
+	g = random(0, 255);
+	b = random(0, 255);
+	
+	wuLine(startX, startY, endX, endY);
 	
 	if (lineLength > 25)
 	{
@@ -63,12 +154,10 @@ int main()
 	}
 	
 	SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	SDL_RenderClear(renderer);
-	SDL_RenderPresent(renderer);
 	
-	SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-	
-	RenderTree((SCREEN_HEIGHT - 100) / 10, (SCREEN_WIDTH >> 1) - 1, SCREEN_HEIGHT - 100, 90);
+	RenderTree((double)(SCREEN_HEIGHT - 100) / 7.5, (SCREEN_WIDTH >> 1) - 1, SCREEN_HEIGHT - 100, 90);
 	
 	SDL_RenderPresent(renderer);
 	
@@ -90,7 +179,7 @@ int main()
 				{
 					SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
 					SDL_RenderClear(renderer);
-					RenderTree((SCREEN_HEIGHT - 100) / 10, (SCREEN_WIDTH >> 1) - 1, SCREEN_HEIGHT - 100, 90);
+					RenderTree((double)(SCREEN_HEIGHT - 100) / 7.5, (SCREEN_WIDTH >> 1) - 1, SCREEN_HEIGHT - 100, 90);
 					SDL_RenderPresent(renderer);
 				}
 			}
