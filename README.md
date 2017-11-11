@@ -2,7 +2,11 @@
 Tried my luck on generating a colorful fractal binary tree.
 
 # Screenshot
-![Screenshot of the program](/Screenshot.png?raw=true "Screenshot")
+This is the rendering without anti-aliasing using SDL's built-in line drawing function.
+![Aliased Tree](/Aliased.png?raw=true "Aliased Line Drawing")
+
+And this one's rendered using Xiaolin Wu's Line Drawing Algorithm which produces anti-aliased lines.
+![Antialiased Tree](/Antialiased.png?raw=true "Anti-Aliased Line Drawing")
 
 # How to Compile
 ## Pre-requisites:
