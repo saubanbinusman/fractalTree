@@ -55,7 +55,7 @@ make all
 ```
    b) Or, you can use the g++ compiler yourself for greater control over compilation flags and options:
 ```terminal
-g++ main.cpp -Ofast -lSDL2 -o program.out && ./a.out
+g++ main.cpp -Ofast -lSDL2 -o program.out && ./program.out
 ```
 
 # User Guide
